@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electricity Bill Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        .tariff-info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Electricity Bill Calculator</h1>
+        
+        <div class="tariff-info">
+            <h3>Tariff Rates:</h3>
+            <p>0 - 600 kWh: $0.01 per kWh</p>
+            <p>601 - 2000 kWh: $0.08 per kWh</p>
+            <p>2001 - 4000 kWh: $0.10 per kWh</p>
+            <p>4001 and above: $0.12 per kWh</p>
+        </div>
+
+        <form id="billForm" onsubmit="calculateBill(event)">
+            <div class="form-group">
+                <label for="kwh">Enter Electricity Usage (kWh):</label>
+                <input type="number" id="kwh" required min="0" step="0.01">
+            </div>
+            <button type="submit">Calculate Bill</button>
+        </form>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function calculateBill(event) {
+            event.preventDefault();
+            
+            const kwh = parseFloat(document.getElementById('kwh').value);
+            let totalBill = 0;
+            
+            if (kwh <= 600) {
+                totalBill = kwh * 0.01;
+            } else if (kwh <= 2000) {
+                totalBill = (600 * 0.01) + ((kwh - 600) * 0.08);
+            } else if (kwh <= 4000) {
+                totalBill = (600 * 0.01) + (1400 * 0.08) + ((kwh - 2000) * 0.10);
+            } else {
+                totalBill = (600 * 0.01) + (1400 * 0.08) + (2000 * 0.10) + ((kwh - 4000) * 0.12);
+            }
+
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.style.backgroundColor = '#e8f5e9';
+            resultDiv.innerHTML = `
+                <h3>Bill Breakdown:</h3>
+                <p>Electricity Usage: ${kwh.toFixed(2)} kWh</p>
+                <p>Total Bill: $${totalBill.toFixed(2)}</p>
+            `;
+        }
+    </script>
+</body>
+</html>
