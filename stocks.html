@@ -5,17 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Stocks</title>
     <style>
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
             text-align: center;
+            margin: 0;
+            padding: 20px;
         }
+
+        h1 {
+            color: #333;
+        }
+
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
         th {
-            background-color: #f2f2f2;
+            background-color: #333;
+            color: white;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .profit {
+            color: green;
+            font-weight: bold;
+        }
+
+        .loss {
+            color: red;
+            font-weight: bold;
+        }
+
+        .footer-row {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+
+        .gains-loss-row {
+            background-color: #fff3cd;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -54,16 +98,16 @@
             </tr>
         </tbody>
         <tfoot>
-            <tr>
-                <th colspan="3">Total</th>
-                <th id="totalBoughtSum"></th>
-                <th></th>
-                <th id="currentValueSum"></th>
-                <th id="totalGainLoss"></th>
+            <tr class="footer-row">
+                <td colspan="3">Total</td>
+                <td id="totalBoughtSum"></td>
+                <td></td>
+                <td id="currentValueSum"></td>
+                <td id="totalGainLoss"></td>
             </tr>
-            <tr>
-                <th colspan="6">Current Gains or Loss ($USD)</th>
-                <th id="currentGainsLoss"></th>
+            <tr class="gains-loss-row">
+                <td colspan="6">Current Gains or Loss ($USD)</td>
+                <td id="currentGainsLoss"></td>
             </tr>
         </tfoot>
     </table>
@@ -74,7 +118,7 @@
             { symbol: 'NBIS', shares: 70, boughtPrice: 30.32, rowId: 2 }
         ];
 
-        const apiKey = 'HQP88F0KLDXVZVF8';  // Your Alpha Vantage API Key
+        const apiKey = '81GLWK8WQJ7DUSSH';  // Your Alpha Vantage API Key
 
         async function fetchStockPrice(symbol) {
             try {
@@ -114,7 +158,11 @@
                 document.getElementById(`totalBoughtValue${stock.rowId}`).innerText = totalBoughtValue.toFixed(2);
                 document.getElementById(`currentPrice${stock.rowId}`).innerText = currentPrice.toFixed(2);
                 document.getElementById(`currentValue${stock.rowId}`).innerText = currentValue.toFixed(2);
-                document.getElementById(`percentageChange${stock.rowId}`).innerText = percentageChange.toFixed(2);
+
+                // Apply color based on gain/loss
+                const percentageCell = document.getElementById(`percentageChange${stock.rowId}`);
+                percentageCell.innerText = percentageChange.toFixed(2) + "%";
+                percentageCell.className = percentageChange >= 0 ? "profit" : "loss";
             }
 
             const totalGainLoss = ((currentValueSum - totalBoughtSum) / totalBoughtSum) * 100;
@@ -123,8 +171,15 @@
             // Update the footer cells
             document.getElementById('totalBoughtSum').innerText = totalBoughtSum.toFixed(2);
             document.getElementById('currentValueSum').innerText = currentValueSum.toFixed(2);
-            document.getElementById('totalGainLoss').innerText = totalGainLoss.toFixed(2);
-            document.getElementById('currentGainsLoss').innerText = currentGainsLoss.toFixed(2);
+            
+            // Apply color based on overall gain/loss
+            const totalGainLossCell = document.getElementById('totalGainLoss');
+            totalGainLossCell.innerText = totalGainLoss.toFixed(2) + "%";
+            totalGainLossCell.className = totalGainLoss >= 0 ? "profit" : "loss";
+
+            const currentGainsLossCell = document.getElementById('currentGainsLoss');
+            currentGainsLossCell.innerText = currentGainsLoss.toFixed(2);
+            currentGainsLossCell.className = currentGainsLoss >= 0 ? "profit" : "loss";
         }
 
         // Update stock data on page load
