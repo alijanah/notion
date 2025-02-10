@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brunei Weather Forecast</title>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const apiKey = "e4e4bcfae4995a0949aa8da4a6004cbb";
+            const location = "Brunei Darussalam";
+            const apiUrl = `https://api.weatherstack.com/current?access_key=${apiKey}&query=${encodeURIComponent(location)}`;
+
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error.info);
+                    }
+                    document.getElementById("weather").innerHTML = `
+                        <h2>Weather in ${data.location.name}, ${data.location.country}</h2>
+                        <p>Temperature: ${data.current.temperature}°C</p>
+                        <p>Weather: ${data.current.weather_descriptions[0]}</p>
+                        <p>Humidity: ${data.current.humidity}%</p>
+                        <p>Wind Speed: ${data.current.wind_speed} km/h</p>
+                        <img src="${data.current.weather_icons[0]}" alt="Weather icon">
+                    `;
+                })
+                .catch(error => {
+                    console.error("Error fetching data:", error);
+                    document.getElementById("weather").innerHTML = `Failed to load weather data: ${error.message}`;
+                });
+        });
+    </script>
+</head>
+<body>
+    <h1>Daily Weather Forecast</h1>
+    <div id="weather">Loading weather data...</div>
+</body>
+</html>
