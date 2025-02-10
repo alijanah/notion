@@ -22,7 +22,7 @@
                         throw new Error(data.error.info);
                     }
                     document.getElementById("weather").innerHTML = `
-                        <h2>Weather in ${data.location.name}, ${data.location.country}</h2>
+                        <!-- <h2>Weather in ${data.location.name}, ${data.location.country}</h2> -->
                         <p>Temperature: ${data.current.temperature}°C</p>
                         <p>Weather: ${data.current.weather_descriptions[0]}</p>
                         <p>Humidity: ${data.current.humidity}%</p>
