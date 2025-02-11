@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grocery List</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        h2 {
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #groceryListTitle {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        #boughtListTitle {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            background: white;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        input {
+            width: 70%;
+            padding: 8px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .add-button {
+            background-color: #28a745;
+            color: white;
+        }
+        .bought-button {
+            background-color: #dc3545;
+            color: white;
+        }
+        .buy-again-button {
+            background-color: #007bff;
+            color: white;
+        }
+        .delete-button {
+            background-color: #6c757d;
+            color: white;
+        }
+        .download-button {
+            display: block;
+            width: 100%;
+            background-color: #17a2b8;
+            color: white;
+            margin-top: 10px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Grocery List</h1>
+    <input type="text" id="itemInput" placeholder="Enter grocery item" onkeydown="handleKeyPress(event)">
+    <button class="add-button" onclick="addItem()">Add</button>
+    
+    <h2 id="groceryListTitle">Items to Buy</h2>
+    <ul id="groceryList"></ul>
+    
+    <h2 id="boughtListTitle">Bought Items</h2>
+    <ul id="boughtList"></ul>
+    
+    <button class="download-button" onclick="downloadList()">Download List</button>
+    
+    <script>
+        let groceryItems = JSON.parse(localStorage.getItem("groceryItems")) || [];
+        let boughtItems = JSON.parse(localStorage.getItem("boughtItems")) || [];
+        
+        function saveToLocalStorage() {
+            localStorage.setItem("groceryItems", JSON.stringify(groceryItems));
+            localStorage.setItem("boughtItems", JSON.stringify(boughtItems));
+        }
+        
+        function addItem() {
+            let input = document.getElementById("itemInput");
+            let itemName = input.value.trim();
+            if (itemName === "") return;
+            
+            groceryItems.push(itemName);
+            saveToLocalStorage();
+            updateGroceryList();
+            input.value = "";
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === "Enter") {
+                addItem();
+            }
+        }
+        
+        function updateGroceryList() {
+            let groceryList = document.getElementById("groceryList");
+            groceryList.innerHTML = "";
+            groceryItems.forEach((item, index) => {
+                let li = document.createElement("li");
+                li.innerHTML = `${index + 1}. <span>${item}</span> <button class="bought-button" onclick="markBought(${index})">Bought</button> <button class="delete-button" onclick="deleteItem(${index}, 'grocery')">Delete</button>`;
+                groceryList.appendChild(li);
+            });
+        }
+        
+        function updateBoughtList() {
+            let boughtList = document.getElementById("boughtList");
+            boughtList.innerHTML = "";
+            boughtItems.forEach((item, index) => {
+                let li = document.createElement("li");
+                li.innerHTML = `${index + 1}. <span>${item}</span> <button class="buy-again-button" onclick="buyAgain(${index})">Buy Again</button> <button class="delete-button" onclick="deleteItem(${index}, 'bought')">Delete</button>`;
+                boughtList.appendChild(li);
+            });
+        }
+        
+        function markBought(index) {
+            let item = groceryItems.splice(index, 1)[0];
+            boughtItems.push(item);
+            saveToLocalStorage();
+            updateGroceryList();
+            updateBoughtList();
+        }
+        
+        function buyAgain(index) {
+            let item = boughtItems.splice(index, 1)[0];
+            groceryItems.push(item);
+            saveToLocalStorage();
+            updateGroceryList();
+            updateBoughtList();
+        }
+        
+        function deleteItem(index, listType) {
+            if (listType === 'grocery') {
+                groceryItems.splice(index, 1);
+            } else {
+                boughtItems.splice(index, 1);
+            }
+            saveToLocalStorage();
+            updateGroceryList();
+            updateBoughtList();
+        }
+        
+        function downloadList() {
+            let data = {
+                "Items to Buy": groceryItems,
+                "Bought Items": boughtItems
+            };
+            let blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+            let a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "grocery_list.json";
+            a.click();
+        }
+        
+        window.onload = function () {
+            updateGroceryList();
+            updateBoughtList();
+        };
+    </script>
+</body>
+</html>
