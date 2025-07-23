@@ -47,6 +47,11 @@
       display: block;
       margin: 10px 0;
     }
+    .edit-button {
+      padding: 4px 8px;
+      margin-left: 8px;
+      font-size: 0.9em;
+    }
   </style>
 </head>
 <body>
@@ -63,6 +68,7 @@
         <th>Current Share Price</th>
         <th>Current Share Value</th>
         <th>Percentage Gain/Loss</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -76,6 +82,7 @@
         <td id="currentPrice-NBIS">Loading...</td>
         <td id="currentValue-NBIS"></td>
         <td id="percentGainLoss-NBIS"></td>
+        <td><button class="edit-button" onclick="editEntry('NBIS')">Edit</button></td>
       </tr>
     </tbody>
   </table>
@@ -159,28 +166,52 @@
 
       stockData[ticker] = { shares, boughtPrice };
 
-      const tbody = document.querySelector('#portfolio tbody');
-      const row = document.createElement('tr');
-      row.id = `${ticker}-row`;
-      row.innerHTML = `
-        <td>${type}</td>
-        <td>${new Date(date).toLocaleDateString('en-GB')}</td>
-        <td>${ticker}</td>
-        <td>${shares}</td>
-        <td id="boughtPrice-${ticker}">${formatCurrency(boughtPrice)}</td>
-        <td id="totalBoughtValue-${ticker}"></td>
-        <td id="currentPrice-${ticker}">Loading...</td>
-        <td id="currentValue-${ticker}"></td>
-        <td id="percentGainLoss-${ticker}"></td>
-      `;
-      tbody.appendChild(row);
+      let row = document.getElementById(`${ticker}-row`);
+      if (!row) {
+        const tbody = document.querySelector('#portfolio tbody');
+        row = document.createElement('tr');
+        row.id = `${ticker}-row`;
+        row.innerHTML = `
+          <td>${type}</td>
+          <td>${new Date(date).toLocaleDateString('en-GB')}</td>
+          <td>${ticker}</td>
+          <td>${shares}</td>
+          <td id="boughtPrice-${ticker}">${formatCurrency(boughtPrice)}</td>
+          <td id="totalBoughtValue-${ticker}"></td>
+          <td id="currentPrice-${ticker}">Loading...</td>
+          <td id="currentValue-${ticker}"></td>
+          <td id="percentGainLoss-${ticker}"></td>
+          <td><button class="edit-button" onclick="editEntry('${ticker}')">Edit</button></td>
+        `;
+        tbody.appendChild(row);
+      } else {
+        row.cells[0].textContent = type;
+        row.cells[1].textContent = new Date(date).toLocaleDateString('en-GB');
+        row.cells[3].textContent = shares;
+        document.getElementById(`boughtPrice-${ticker}`).textContent = formatCurrency(boughtPrice);
+      }
 
       await updatePortfolio();
       form.reset();
     });
 
+    function editEntry(ticker) {
+      const row = document.getElementById(`${ticker}-row`);
+      const type = row.cells[0].textContent;
+      const dateParts = row.cells[1].textContent.split('/');
+      const date = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+      const shares = row.cells[3].textContent;
+      const boughtPrice = document.getElementById(`boughtPrice-${ticker}`).textContent.replace(/[^0-9.]+/g, "");
+
+      const form = document.getElementById('stockForm');
+      form.type.value = type;
+      form.date.value = date;
+      form.ticker.value = ticker;
+      form.shares.value = shares;
+      form.boughtPrice.value = boughtPrice;
+    }
+
     updatePortfolio();
   </script>
 </body>
 </html>
-
