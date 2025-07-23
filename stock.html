@@ -47,7 +47,7 @@
       display: block;
       margin: 10px 0;
     }
-    .edit-button {
+    .edit-button, .delete-button {
       padding: 4px 8px;
       margin-left: 8px;
       font-size: 0.9em;
@@ -71,40 +71,25 @@
         <th>Actions</th>
       </tr>
     </thead>
-    <tbody>
-      <tr id="NBIS-row">
-        <td>BUY</td>
-        <td>10 May 2025</td>
-        <td>NBIS</td>
-        <td>70</td>
-        <td id="boughtPrice-NBIS">$30.32</td>
-        <td id="totalBoughtValue-NBIS"></td>
-        <td id="currentPrice-NBIS">Loading...</td>
-        <td id="currentValue-NBIS"></td>
-        <td id="percentGainLoss-NBIS"></td>
-        <td><button class="edit-button" onclick="editEntry('NBIS')">Edit</button></td>
-      </tr>
-    </tbody>
+    <tbody></tbody>
   </table>
 
-  <h2>Add Stock Entry</h2>
+  <h2 id="formTitle">Add Stock Entry</h2>
   <form id="stockForm">
     <label>Type: <select name="type"><option>BUY</option><option>SELL</option></select></label>
     <label>Date: <input type="date" name="date" required></label>
     <label>Stock Ticker: <input type="text" name="ticker" required></label>
     <label>Shares: <input type="number" name="shares" required></label>
     <label>Bought Price: <input type="number" name="boughtPrice" step="0.01" required></label>
-    <button type="submit">Add Stock</button>
+    <button type="submit" id="submitButton">Add Stock</button>
   </form>
 
   <script>
     const apiKey = '81GLWK8WQJ7DUSSH';
-    const stockData = {
-      NBIS: {
-        shares: 70,
-        boughtPrice: 30.32
-      }
-    };
+    const stockData = {};
+
+    let isEditing = false;
+    let editingTicker = '';
 
     async function fetchStockPrice(ticker) {
       const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=${apiKey}`;
@@ -164,6 +149,11 @@
       const shares = parseInt(form.shares.value);
       const boughtPrice = parseFloat(form.boughtPrice.value);
 
+      if (!isEditing && stockData[ticker]) {
+        alert('Stock with this ticker already exists. Please use a different ticker or edit the existing one.');
+        return;
+      }
+
       stockData[ticker] = { shares, boughtPrice };
 
       let row = document.getElementById(`${ticker}-row`);
@@ -181,7 +171,10 @@
           <td id="currentPrice-${ticker}">Loading...</td>
           <td id="currentValue-${ticker}"></td>
           <td id="percentGainLoss-${ticker}"></td>
-          <td><button class="edit-button" onclick="editEntry('${ticker}')">Edit</button></td>
+          <td>
+            <button class="edit-button" onclick="editEntry('${ticker}')">Edit</button>
+            <button class="delete-button" onclick="deleteEntry('${ticker}')">Delete</button>
+          </td>
         `;
         tbody.appendChild(row);
       } else {
@@ -193,13 +186,17 @@
 
       await updatePortfolio();
       form.reset();
+      form.ticker.disabled = false;
+      document.getElementById('submitButton').textContent = 'Add Stock';
+      document.getElementById('formTitle').textContent = 'Add Stock Entry';
+      isEditing = false;
     });
 
     function editEntry(ticker) {
       const row = document.getElementById(`${ticker}-row`);
       const type = row.cells[0].textContent;
-      const dateParts = row.cells[1].textContent.split('/');
-      const date = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+      const [day, month, year] = row.cells[1].textContent.split('/');
+      const date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
       const shares = row.cells[3].textContent;
       const boughtPrice = document.getElementById(`boughtPrice-${ticker}`).textContent.replace(/[^0-9.]+/g, "");
 
@@ -207,8 +204,20 @@
       form.type.value = type;
       form.date.value = date;
       form.ticker.value = ticker;
+      form.ticker.disabled = true;
       form.shares.value = shares;
       form.boughtPrice.value = boughtPrice;
+
+      document.getElementById('submitButton').textContent = 'Update Entry';
+      document.getElementById('formTitle').textContent = `Edit ${ticker} Entry`;
+      isEditing = true;
+      editingTicker = ticker;
+    }
+
+    function deleteEntry(ticker) {
+      delete stockData[ticker];
+      const row = document.getElementById(`${ticker}-row`);
+      if (row) row.remove();
     }
 
     updatePortfolio();
