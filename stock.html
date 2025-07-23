@@ -86,10 +86,11 @@
 
   <script>
     const apiKey = '81GLWK8WQJ7DUSSH';
-    const stockData = {};
 
+    // Stock entries mapped by unique ID: ticker|date|type
+    let stockData = {};
     let isEditing = false;
-    let editingTicker = '';
+    let editingId = '';
 
     async function fetchStockPrice(ticker) {
       const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=${apiKey}`;
@@ -114,113 +115,20 @@
       return `${value.toFixed(2)}%`;
     }
 
-    async function updatePortfolio() {
-      for (const ticker in stockData) {
-        const { shares, boughtPrice } = stockData[ticker];
-        const totalBoughtValue = shares * boughtPrice;
-        const totalCell = document.getElementById(`totalBoughtValue-${ticker}`);
-        if (totalCell) totalCell.textContent = formatCurrency(totalBoughtValue);
-
-        const currentPrice = await fetchStockPrice(ticker);
-        if (!currentPrice) continue;
-
-        const currentValue = shares * currentPrice;
-        const gainLossPercent = ((currentValue - totalBoughtValue) / totalBoughtValue) * 100;
-
-        const priceCell = document.getElementById(`currentPrice-${ticker}`);
-        const valueCell = document.getElementById(`currentValue-${ticker}`);
-        const gainLossCell = document.getElementById(`percentGainLoss-${ticker}`);
-
-        if (priceCell) priceCell.textContent = formatCurrency(currentPrice);
-        if (valueCell) valueCell.textContent = formatCurrency(currentValue);
-        if (gainLossCell) {
-          gainLossCell.textContent = formatPercentage(gainLossPercent);
-          gainLossCell.className = gainLossPercent >= 0 ? 'gain' : 'loss';
-        }
-      }
+    // Save stockData to Local Storage
+    function saveToLocalStorage() {
+      localStorage.setItem('portfolioData', JSON.stringify(stockData));
     }
 
-    document.getElementById('stockForm').addEventListener('submit', async function (e) {
-      e.preventDefault();
-      const form = e.target;
-      const type = form.type.value;
-      const date = form.date.value;
-      const ticker = form.ticker.value.toUpperCase();
-      const shares = parseInt(form.shares.value);
-      const boughtPrice = parseFloat(form.boughtPrice.value);
-
-      if (!isEditing && stockData[ticker]) {
-        alert('Stock with this ticker already exists. Please use a different ticker or edit the existing one.');
-        return;
-      }
-
-      stockData[ticker] = { shares, boughtPrice };
-
-      let row = document.getElementById(`${ticker}-row`);
-      if (!row) {
-        const tbody = document.querySelector('#portfolio tbody');
-        row = document.createElement('tr');
-        row.id = `${ticker}-row`;
-        row.innerHTML = `
-          <td>${type}</td>
-          <td>${new Date(date).toLocaleDateString('en-GB')}</td>
-          <td>${ticker}</td>
-          <td>${shares}</td>
-          <td id="boughtPrice-${ticker}">${formatCurrency(boughtPrice)}</td>
-          <td id="totalBoughtValue-${ticker}"></td>
-          <td id="currentPrice-${ticker}">Loading...</td>
-          <td id="currentValue-${ticker}"></td>
-          <td id="percentGainLoss-${ticker}"></td>
-          <td>
-            <button class="edit-button" onclick="editEntry('${ticker}')">Edit</button>
-            <button class="delete-button" onclick="deleteEntry('${ticker}')">Delete</button>
-          </td>
-        `;
-        tbody.appendChild(row);
-      } else {
-        row.cells[0].textContent = type;
-        row.cells[1].textContent = new Date(date).toLocaleDateString('en-GB');
-        row.cells[3].textContent = shares;
-        document.getElementById(`boughtPrice-${ticker}`).textContent = formatCurrency(boughtPrice);
-      }
-
-      await updatePortfolio();
-      form.reset();
-      form.ticker.disabled = false;
-      document.getElementById('submitButton').textContent = 'Add Stock';
-      document.getElementById('formTitle').textContent = 'Add Stock Entry';
-      isEditing = false;
-    });
-
-    function editEntry(ticker) {
-      const row = document.getElementById(`${ticker}-row`);
-      const type = row.cells[0].textContent;
-      const [day, month, year] = row.cells[1].textContent.split('/');
-      const date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-      const shares = row.cells[3].textContent;
-      const boughtPrice = document.getElementById(`boughtPrice-${ticker}`).textContent.replace(/[^0-9.]+/g, "");
-
-      const form = document.getElementById('stockForm');
-      form.type.value = type;
-      form.date.value = date;
-      form.ticker.value = ticker;
-      form.ticker.disabled = true;
-      form.shares.value = shares;
-      form.boughtPrice.value = boughtPrice;
-
-      document.getElementById('submitButton').textContent = 'Update Entry';
-      document.getElementById('formTitle').textContent = `Edit ${ticker} Entry`;
-      isEditing = true;
-      editingTicker = ticker;
+    // Load stockData from Local Storage
+    function loadFromLocalStorage() {
+      const saved = localStorage.getItem('portfolioData');
+      stockData = saved ? JSON.parse(saved) : {};
     }
 
-    function deleteEntry(ticker) {
-      delete stockData[ticker];
-      const row = document.getElementById(`${ticker}-row`);
-      if (row) row.remove();
+    function generateId(ticker, date, type) {
+      return `${ticker}|${date}|${type}`;
     }
 
-    updatePortfolio();
-  </script>
-</body>
-</html>
+    async function addOrUpdateRow(id, entry) {
+      const tbody = document.querySelector('#portfolio
